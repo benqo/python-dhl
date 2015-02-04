@@ -50,7 +50,8 @@ sender = DHLCompany(
             postal_code='94107',
             country_code='US',
             phone='11111111',
-            email='git@github.com')
+            email='git@github.com'
+            )
 ``` 
     
     
@@ -66,7 +67,8 @@ receiver = DHLPerson(
             postal_code='94107',
             country_code='US',
             phone='11111111',
-            email='jon@github.com')
+            email='jon@github.com'
+            )
 ``` 
     
     
@@ -103,14 +105,25 @@ Shipment is a ``DHLShipment`` object and connects the sender, receiver and the p
 ```python
 shipment = DHLShipment(sender, receiver, packages)
 ``` 
+
+By default, the shipment date is set to current date and time. You can change it by setting the
+
+```python
+shipment.ship_datetime = datetime.now + timedelta(hours=1)
+``` 
+
+Note the date has to be in a future and it has to be valid (no weekends, holidays...)
     
    
 #### Request a pickup
-If you wish to request a courier pickup, set
+If you wish to request a courier pickup, set the variable and provide the latest pickup time.
     
 ```python
-shipment.drop_off_type = DHLShipment.DROP_OFF_REQUEST_COURIER
+shipment.request_courier = True
+shipment.pickup_time = datetime.now + timedelta(hours=2)
 ``` 
+
+By default the pickup time is set to 1 hour from the creation of the shipment.
     
 
 ### Send the shipment
