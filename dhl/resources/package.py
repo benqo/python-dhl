@@ -1,5 +1,3 @@
-__author__ = 'Bench'
-
 class DHLPackage:
     """
     A class for creating separate packages contained in a shipment.

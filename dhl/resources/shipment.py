@@ -1,5 +1,3 @@
-__author__ = 'Bench'
-
 from datetime import datetime, timedelta
 
 

@@ -1,5 +1,3 @@
-__author__ = 'Bench'
-
 from suds.client import Client
 from suds.wsse import Security, UsernameToken
 from datetime import timedelta
