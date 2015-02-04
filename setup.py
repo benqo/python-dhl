@@ -16,7 +16,7 @@ It also provides the ability to save the shipping labels.
 setup(
     name='python-dhl',
 
-    version='1.0.0.dev2',
+    version='1.0.0.dev3',
 
     description='Python package for DHL webservices',
     long_description=long_description,
