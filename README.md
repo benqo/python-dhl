@@ -28,85 +28,108 @@ And then use the DHL service to send the shipment.
 
 Initialize a new DHL service using
 
-    service = DHLService('username', 'password', 'accountNumber')
-    
+```python
+service = DHLService('username', 'password', 'accountNumber')
+``` 
 You can also use the DHL test mode
 
-    service.test_mode = True
+```python
+service.test_mode = True
+``` 
      
 ### Create the sender
 
 Sender can either be a ``DHLPerson`` or a ``DHLCompany``.
 
-    sender = DHLCompany(
-                company_name='GitHub',
-                person_name='Git Hub',
-                street_lines='275 Brannan Street',
-                city='San Francisco,
-                postal_code='94107',
-                country_code='US',
-                phone='11111111',
-                email='git@github.com')
+```python
+sender = DHLCompany(
+            company_name='GitHub',
+            person_name='Git Hub',
+            street_lines='275 Brannan Street',
+            city='San Francisco,
+            postal_code='94107',
+            country_code='US',
+            phone='11111111',
+            email='git@github.com')
+``` 
+    
     
 ### Create the receiver
 
 Receiver can also be either a ``DHLPerson`` or a ``DHLCompany``.
 
-    receiver = DHLPerson(
-                person_name='Jon Doe',
-                street_lines='276 Brannan Street',
-                city='San Francisco,
-                postal_code='94107',
-                country_code='US',
-                phone='11111111',
-                email='jon@github.com')
+```python
+receiver = DHLPerson(
+            person_name='Jon Doe',
+            street_lines='276 Brannan Street',
+            city='San Francisco,
+            postal_code='94107',
+            country_code='US',
+            phone='11111111',
+            email='jon@github.com')
+``` 
+    
     
 ### Create the packages
 
 The packages are ``DHLPackage`` objects and are supposed to be in a list.
 
-    packages = [
-        DHLPackage(
-            weight=0.15,
-            width=10,
-            length=10,
-            height=10,
-            price=100,
-            description='Good product'
-        ),
-        DHLPackage(
-            weight=0.15,
-            width=10,
-            length=10,
-            height=10,
-            price=100,
-            description='The best product'
-        )
-    ]
+```python
+packages = [
+    DHLPackage(
+        weight=0.15,
+        width=10,
+        length=10,
+        height=10,
+        price=100,
+        description='Good product'
+    ),
+    DHLPackage(
+        weight=0.15,
+        width=10,
+        length=10,
+        height=10,
+        price=100,
+        description='The best product'
+    )
+]
+``` 
+    
     
 ### Create the shipment
 
 Shipment is a ``DHLShipment`` object and connects the sender, receiver and the packages.
 
-    shipment = DHLShipment(sender, receiver, packages)
+```python
+shipment = DHLShipment(sender, receiver, packages)
+``` 
+    
    
 #### Request a pickup
 If you wish to request a courier pickup, set
     
-    shipment.drop_off_type = DHLShipment.DROP_OFF_REQUEST_COURIER
+```python
+shipment.drop_off_type = DHLShipment.DROP_OFF_REQUEST_COURIER
+``` 
+    
 
 ### Send the shipment
 
 You are now ready to send the shipment. Simply call
 
-    service.send(shipment)
-
+```python
+service.send(shipment)
+``` 
+    
 Once the service is done, it stores the tracking number, identification number and the label in the ``shipment`` object.
 It also saves the dispatch identification number in case a pickup was requested as well.
 
 You can save the label to a file (by default to folder ``labels/``, you can change this by changing ``shipment.label_path``)
+
+```python
+shipment.save_label_to_file()
+``` 
     
-    shipment.save_label_to_file()
     
 ### Delete a shipment
 
