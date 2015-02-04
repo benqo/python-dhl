@@ -113,6 +113,10 @@ shipment.ship_datetime = datetime.now + timedelta(hours=1)
 ``` 
 
 Note the date has to be in a future and it has to be valid (no weekends, holidays...)
+
+#### Other options
+
+Please check the ``DHLShipment`` class for the full list of possible options.
     
    
 #### Request a pickup
@@ -141,7 +145,7 @@ You can save the label to a file (by default to folder ``labels/``, you can chan
 
 ```python
 shipment.save_label_to_file()
-``` 
+```
     
     
 ### Delete a shipment
