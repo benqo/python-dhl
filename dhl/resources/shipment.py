@@ -30,7 +30,7 @@ class DHLShipment:
 
     def __init__(self, sender, receiver, packages, ship_datetime=datetime.now(), drop_off_type=DROP_OFF_REGULAR_PICKUP,
                  service_type=SERVICE_TYPE_EU, currency=CURRENCY_EUR, unit=UNIT_METRIC,
-                 payment_info=CUSTOMS_PAYMENT_CLIENT, customs_description=None, customs_content=CUSTOMS_NON_DOCUMENTS,
+                 payment_info=CUSTOMS_PAYMENT_CLIENT, customs_description=None, customs_value=None, customs_content=CUSTOMS_NON_DOCUMENTS,
                  pickup_time=datetime.now()):
         self.sender = sender
         self.receiver = receiver
@@ -43,9 +43,14 @@ class DHLShipment:
         self.payment_info = payment_info
         self.customs_description = customs_description
         self.customs_content = customs_content
+        self.customs_value = customs_value
         self.pickup_time = pickup_time
         self.manifested = False
         self.labels_path = 'labels/'
+        self.tracking_number = None
+        self.identification_number = None
+        self.label_bytes = None
+        self.dispatch_number = None
 
     def manifest(self, tracking_number, identification_number, label_bytes, dispatch_number=None):
         self.tracking_number = tracking_number

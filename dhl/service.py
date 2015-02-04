@@ -17,6 +17,8 @@ class DHLService:
     dhl_datetime_format = "%Y-%m-%dT%H:%M:00 GMT"
     dhl_time_format = "%H:%M"
     utc_offset = None
+    eu_codes = ("AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IT", "LV", "LI", "LT",
+                "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "GB")
 
     def __init__(self, username, password, account_number, test_mode=False):
         self.username = username
@@ -75,11 +77,9 @@ class DHLService:
                 print('  No notifications.')
         print()
 
-
     def create_dhl_shipment(self, client, shipment):
         dhl_shipment = client.factory.create('ns4:docTypeRef_RequestedShipmentType')
         dhl_shipment.ShipmentInfo.DropOffType = shipment.drop_off_type
-        dhl_shipment.ShipmentInfo.ServiceType = shipment.service_type
         dhl_shipment.ShipmentInfo.Currency = shipment.currency
         dhl_shipment.ShipmentInfo.UnitOfMeasurement = shipment.unit
         dhl_shipment.ShipmentInfo.LabelType = shipment.label_type
@@ -88,12 +88,18 @@ class DHLService:
         dhl_shipment.ShipmentInfo.PackagesCount = str(len(shipment.packages))
         dhl_shipment.PaymentInfo = shipment.payment_info
 
+        dhl_shipment.ShipmentInfo.ServiceType = self.get_service_type(shipment)
+
+        customs_description, customs_value = self.get_customs_description_and_value(shipment)
+
+        dhl_shipment.InternationalDetail.Commodities.Description = customs_description
+        dhl_shipment.InternationalDetail.Commodities.CustomsValue = customs_value
+
+        dhl_shipment.InternationalDetail.Content = shipment.customs_content
+
         dhl_shipment.ShipTimestamp = self.get_dhl_formatted_shipment_time(shipment.ship_datetime)
         if shipment.drop_off_type == DHLShipment.DROP_OFF_REQUEST_COURIER:
             dhl_shipment.PickupLocationCloseTime = self.get_dhl_formatted_pickup_time(shipment.pickup_time)
-
-        dhl_shipment.InternationalDetail.Commodities.Description = shipment.customs_description
-        dhl_shipment.InternationalDetail.Content = shipment.customs_content
 
         dhl_shipment.Ship.Shipper.Contact.PersonName = shipment.sender.person_name
         dhl_shipment.Ship.Shipper.Contact.CompanyName = shipment.sender.company_name
@@ -148,3 +154,26 @@ class DHLService:
         formatted_time = datetime_stamp.strftime(self.dhl_time_format)
         return formatted_time
 
+    def get_customs_description_and_value(self, shipment):
+        customs_description = ''
+        customs_value = 0
+        for package in shipment.packages:  # automatically generate description and value for customs
+            customs_description += package.description + ", "
+            customs_value += package.price
+
+        # if the customs variables are not set, use the generated ones
+        customs_description = shipment.customs_description if shipment.customs_description else customs_description[:-2]
+        customs_value = shipment.customs_value if shipment.customs_value else customs_value
+
+        return customs_description, customs_value
+
+    def get_service_type(self, shipment):
+        sender_code = shipment.sender.country_code
+        receiver_code = shipment.receiver.country_code
+
+        if sender_code == receiver_code:  # domestic
+            return DHLShipment.SERVICE_TYPE_DOMESTIC
+        elif sender_code in self.eu_codes and receiver_code in self.eu_codes:  # in EU
+            return DHLShipment.SERVICE_TYPE_EU
+        else:  # world
+            return DHLShipment.SERVICE_TYPE_WORLD
