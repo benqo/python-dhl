@@ -20,7 +20,7 @@ class DHLShipment:
     UNIT_IMPERIAL = 'SU'
 
     CUSTOMS_PAYMENT_CLIENT = 'DDU'
-    CUSTOMS_PAYMENT_CUSTOMER = 'DDP'
+    CUSTOMS_PAYMENT_CUSTOMER = 'DAP'
 
     CUSTOMS_DOCUMENTS = 'DOCUMENTS'
     CUSTOMS_NON_DOCUMENTS = 'NON_DOCUMENTS'
@@ -30,7 +30,7 @@ class DHLShipment:
 
     def __init__(self, sender, receiver, packages, ship_datetime=datetime.now(), request_pickup=False,
                  service_type=SERVICE_TYPE_EU, currency=CURRENCY_EUR, unit=UNIT_METRIC,
-                 payment_info=CUSTOMS_PAYMENT_CLIENT, customs_description=None, customs_value=None, customs_content=CUSTOMS_NON_DOCUMENTS,
+                 payment_info=CUSTOMS_PAYMENT_CUSTOMER, customs_description=None, customs_value=None, customs_content=CUSTOMS_NON_DOCUMENTS,
                  pickup_time=datetime.now()+timedelta(hours=1)):
         self.sender = sender
         self.receiver = receiver
