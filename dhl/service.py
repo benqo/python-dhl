@@ -165,8 +165,8 @@ class DHLService:
             customs_value += package.price
 
         # if the customs variables are not set, use the generated ones
-        customs_description = shipment.customs_description if shipment.customs_description else customs_description[:-2]
-        customs_value = shipment.customs_value if shipment.customs_value else customs_value
+        customs_description = shipment.customs_description or customs_description[:-2]
+        customs_value = shipment.customs_value or customs_value
 
         return customs_description, customs_value
 
