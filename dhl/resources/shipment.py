@@ -28,15 +28,15 @@ class DHLShipment:
     label_type = 'PDF'
     label_template = 'ECOM26_84_001'
 
-    def __init__(self, sender, receiver, packages, ship_datetime=datetime.now(), drop_off_type=DROP_OFF_REGULAR_PICKUP,
+    def __init__(self, sender, receiver, packages, ship_datetime=datetime.now(), request_pickup=False,
                  service_type=SERVICE_TYPE_EU, currency=CURRENCY_EUR, unit=UNIT_METRIC,
                  payment_info=CUSTOMS_PAYMENT_CLIENT, customs_description=None, customs_value=None, customs_content=CUSTOMS_NON_DOCUMENTS,
-                 pickup_time=datetime.now()):
+                 pickup_time=datetime.now()+timedelta(hours=1)):
         self.sender = sender
         self.receiver = receiver
         self.packages = packages
         self.ship_datetime = ship_datetime
-        self.drop_off_type = drop_off_type
+        self.request_pickup = request_pickup
         self.service_type = service_type
         self.currency = currency
         self.unit = unit

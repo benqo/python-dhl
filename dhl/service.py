@@ -79,7 +79,6 @@ class DHLService:
 
     def create_dhl_shipment(self, client, shipment):
         dhl_shipment = client.factory.create('ns4:docTypeRef_RequestedShipmentType')
-        dhl_shipment.ShipmentInfo.DropOffType = shipment.drop_off_type
         dhl_shipment.ShipmentInfo.Currency = shipment.currency
         dhl_shipment.ShipmentInfo.UnitOfMeasurement = shipment.unit
         dhl_shipment.ShipmentInfo.LabelType = shipment.label_type
@@ -98,8 +97,12 @@ class DHLService:
         dhl_shipment.InternationalDetail.Content = shipment.customs_content
 
         dhl_shipment.ShipTimestamp = self.get_dhl_formatted_shipment_time(shipment.ship_datetime)
-        if shipment.drop_off_type == DHLShipment.DROP_OFF_REQUEST_COURIER:
+
+        if shipment.request_pickup:
+            dhl_shipment.ShipmentInfo.DropOffType = DHLShipment.DROP_OFF_REQUEST_COURIER
             dhl_shipment.PickupLocationCloseTime = self.get_dhl_formatted_pickup_time(shipment.pickup_time)
+        else:
+            dhl_shipment.ShipmentInfo.DropOffType = DHLShipment.DROP_OFF_REGULAR_PICKUP
 
         dhl_shipment.Ship.Shipper.Contact.PersonName = shipment.sender.person_name
         dhl_shipment.Ship.Shipper.Contact.CompanyName = shipment.sender.company_name
