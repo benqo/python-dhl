@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import time
+from dhl.resources.response import DHLResponse
 
 
 class DHLShipment:
@@ -54,29 +55,9 @@ class DHLShipment:
         self.customs_content = customs_content
         self.customs_value = customs_value
         self.pickup_time = pickup_time
-        self.manifested = False
-        self.labels_path = 'labels/'
-        self.tracking_number = None
-        self.identification_number = None
-        self.label_bytes = None
-        self.dispatch_number = None
         self.drop_off_type = None
-
-    def manifest(self, tracking_number, identification_number, label_bytes, dispatch_number=None):
-        """
-        Called when the request is finished and we add the response data
-        :param tracking_number: shipment tracking
-        :param identification_number: shipment id
-        :param label_bytes: shipping label in bytes
-        :param dispatch_number: optional, if the courier pickup was requested
-        :return:
-        """
-        self.tracking_number = tracking_number
-        self.identification_number = identification_number
-        self.label_bytes = label_bytes
-        self.dispatch_number = dispatch_number
-        if self.label_bytes:
-            self.manifested = True
+        self.labels_path = 'labels/'
+        self.response = None
 
     def automatically_set_predictable_fields(self):
         """
@@ -87,7 +68,6 @@ class DHLShipment:
         self.customs_description, self.customs_value = self.get_customs_description_and_value()
         self.drop_off_type = self.get_drop_off_type()
         self.pickup_time = self.get_pickup_time()
-
 
     def get_pickup_time(self):
         """
@@ -177,13 +157,13 @@ class DHLShipment:
         import os.path
         import base64
 
-        if self.manifested:
-            pdf_decoded = base64.b64decode(self.label_bytes)
+        if self.response and self.response.success:
+            pdf_decoded = base64.b64decode(self.response.label_bytes)
 
             if not os.path.exists(self.labels_path):
                 os.makedirs(self.labels_path)
 
-            f = open(self.labels_path + self.tracking_number + '.PDF', 'wb')
+            f = open(self.labels_path + self.response.tracking_number + '.PDF', 'wb')
             f.write(pdf_decoded)
             f.close()
         else:

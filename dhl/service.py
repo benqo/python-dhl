@@ -4,6 +4,7 @@ from suds.wsse import Security, UsernameToken
 from dhl.resources.address import DHLPerson, DHLCompany
 from dhl.resources.package import DHLPackage
 from dhl.resources.shipment import DHLShipment
+from dhl.resources.response import DHLResponse
 
 
 class DHLService:
@@ -25,10 +26,12 @@ class DHLService:
         Creates the client, the DHL shipment and makes the DHL web request.
         :param shipment: DHLShipment object
         :param message: optional message
-        :return:
+        :return: True if successful, else False
         """
-        if shipment.manifested:
+        if shipment.response and shipment.response.success:
             print('This shipment has already been sent. Please create a new shipment.')
+            return False
+
         if not self.client:
             url = self.test_url if self.test_mode else self.url
             self.client = Client(url, faults=False)
@@ -55,26 +58,43 @@ class DHLService:
 
             if reply.LabelImage[0].GraphicImage:
                 label_bytes = reply.LabelImage[0].GraphicImage
-                shipment.manifest(tracking_number, identification_number, label_bytes, dispatch_number=dispatch_number)
+                shipment.response = DHLResponse(
+                    success=True,
+                    tracking_number=tracking_number,
+                    identification_number=identification_number,
+                    label_bytes=label_bytes
+                )
 
                 print('Successfully created DHL shipment!')
                 print('  Tracking number: ' + tracking_number)
                 print('  Identification number: ' + identification_number)
                 if dispatch_number:
+                    shipment.response.dispatch_number = dispatch_number
                     print('  Dispatch number: ' + dispatch_number)
                 print('  PDF label saved.')
+                return True
 
             else:
                 print('  No PDF label!')
         except AttributeError:
             print('Unsuccessful DHL shipment request.')
+            shipment.response = DHLResponse(
+                success=False
+            )
             try:
-                if reply.Notification: print('  Notifications:')
+                if reply.Notification:
+                    print('  Notifications:')
+
+                errors = ()
                 for notif in reply.Notification:
+                    errors += (notif._code, notif.Message)
                     print('  [Code: ' + notif._code + ', Message: ' + notif.Message + ']')
+                shipment.response.errors = errors
             except AttributeError:
                 print('  No notifications.')
         print()
+
+        return False
 
     def create_dhl_shipment(self, client, shipment):
         """
