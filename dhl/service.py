@@ -85,9 +85,9 @@ class DHLService:
                 if reply.Notification:
                     print('  Notifications:')
 
-                errors = ()
+                errors = []
                 for notif in reply.Notification:
-                    errors += (notif._code, notif.Message)
+                    errors.append([notif._code, notif.Message])
                     print('  [Code: ' + notif._code + ', Message: ' + notif.Message + ']')
                 shipment.response.errors = errors
             except AttributeError:
