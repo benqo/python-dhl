@@ -1,7 +1,5 @@
 from suds.client import Client
 from suds.wsse import Security, UsernameToken
-from datetime import timedelta
-import time
 
 from dhl.resources.address import DHLPerson, DHLCompany
 from dhl.resources.package import DHLPackage
@@ -14,11 +12,6 @@ class DHLService:
     """
     test_url = 'https://wsb.dhl.com/sndpt/expressRateBook?wsdl'
     url = 'https://wsb.dhl.com:443/gbl/expressRateBook?wsdl'
-    dhl_datetime_format = "%Y-%m-%dT%H:%M:00 GMT"
-    dhl_time_format = "%H:%M"
-    utc_offset = None
-    eu_codes = ("AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IT", "LV", "LI", "LT",
-                "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "GB")
 
     def __init__(self, username, password, account_number, test_mode=False):
         self.username = username
@@ -28,6 +21,12 @@ class DHLService:
         self.client = None
 
     def send(self, shipment, message=None):
+        """
+        Creates the client, the DHL shipment and makes the DHL web request.
+        :param shipment: DHLShipment object
+        :param message: optional message
+        :return:
+        """
         if shipment.manifested:
             print('This shipment has already been sent. Please create a new shipment.')
         if not self.client:
@@ -78,6 +77,14 @@ class DHLService:
         print()
 
     def create_dhl_shipment(self, client, shipment):
+        """
+        Creates a soap DHL shipment from the DHLShipment and the soap client.
+        :param client: soap client
+        :param shipment: DHLShipment object
+        :return: soap dhl shipment
+        """
+        shipment.automatically_set_predictable_fields()
+
         dhl_shipment = client.factory.create('ns4:docTypeRef_RequestedShipmentType')
         dhl_shipment.ShipmentInfo.Currency = shipment.currency
         dhl_shipment.ShipmentInfo.UnitOfMeasurement = shipment.unit
@@ -86,23 +93,13 @@ class DHLService:
         dhl_shipment.ShipmentInfo.Account = self.account_number
         dhl_shipment.ShipmentInfo.PackagesCount = str(len(shipment.packages))
         dhl_shipment.PaymentInfo = shipment.payment_info
-
-        dhl_shipment.ShipmentInfo.ServiceType = self.get_service_type(shipment)
-
-        customs_description, customs_value = self.get_customs_description_and_value(shipment)
-
-        dhl_shipment.InternationalDetail.Commodities.Description = customs_description
-        dhl_shipment.InternationalDetail.Commodities.CustomsValue = customs_value
-
+        dhl_shipment.ShipmentInfo.ServiceType = shipment.service_type
+        dhl_shipment.InternationalDetail.Commodities.Description = shipment.customs_description
+        dhl_shipment.InternationalDetail.Commodities.CustomsValue = shipment.customs_value
         dhl_shipment.InternationalDetail.Content = shipment.customs_content
-
-        dhl_shipment.ShipTimestamp = self.get_dhl_formatted_shipment_time(shipment.ship_datetime)
-
-        if shipment.request_pickup:
-            dhl_shipment.ShipmentInfo.DropOffType = DHLShipment.DROP_OFF_REQUEST_COURIER
-            dhl_shipment.PickupLocationCloseTime = self.get_dhl_formatted_pickup_time(shipment.pickup_time)
-        else:
-            dhl_shipment.ShipmentInfo.DropOffType = DHLShipment.DROP_OFF_REGULAR_PICKUP
+        dhl_shipment.ShipmentInfo.DropOffType = shipment.drop_off_type
+        dhl_shipment.ShipTimestamp = shipment.get_dhl_formatted_shipment_time()
+        dhl_shipment.PickupLocationCloseTime = shipment.get_dhl_formatted_pickup_time()
 
         dhl_shipment.Ship.Shipper.Contact.PersonName = shipment.sender.person_name
         dhl_shipment.Ship.Shipper.Contact.CompanyName = shipment.sender.company_name
@@ -141,42 +138,3 @@ class DHLService:
             counter += 1
 
         return dhl_shipment
-
-    def get_dhl_formatted_shipment_time(self, datetime_stamp):
-        if not self.utc_offset:
-            # time lib https://docs.python.org/3/library/time.html#time.strftime
-            self.utc_offset = time.strftime('%z')  # just take the utc offset from the time lib
-            self.utc_offset = self.utc_offset[:-2] + ':' + self.utc_offset[-2:]  # insert : in +0100 to get +01:00
-
-        datetime_stamp += timedelta(minutes=5)
-        formatted_time = datetime_stamp.strftime(self.dhl_datetime_format)
-        return formatted_time + self.utc_offset
-
-    def get_dhl_formatted_pickup_time(self, datetime_stamp):
-        datetime_stamp += timedelta(minutes=5)
-        formatted_time = datetime_stamp.strftime(self.dhl_time_format)
-        return formatted_time
-
-    def get_customs_description_and_value(self, shipment):
-        customs_description = ''
-        customs_value = 0
-        for package in shipment.packages:  # automatically generate description and value for customs
-            customs_description += package.description + ", "
-            customs_value += package.price
-
-        # if the customs variables are not set, use the generated ones
-        customs_description = shipment.customs_description or customs_description[:-2]
-        customs_value = shipment.customs_value or customs_value
-
-        return customs_description, customs_value
-
-    def get_service_type(self, shipment):
-        sender_code = shipment.sender.country_code
-        receiver_code = shipment.receiver.country_code
-
-        if sender_code == receiver_code:  # domestic
-            return DHLShipment.SERVICE_TYPE_DOMESTIC
-        elif sender_code in self.eu_codes and receiver_code in self.eu_codes:  # in EU
-            return DHLShipment.SERVICE_TYPE_EU
-        else:  # world
-            return DHLShipment.SERVICE_TYPE_WORLD
