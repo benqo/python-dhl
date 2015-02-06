@@ -1,7 +1,5 @@
 from datetime import datetime, timedelta
 import time
-from dhl.resources.response import DHLResponse
-
 
 class DHLShipment:
     """
@@ -31,13 +29,13 @@ class DHLShipment:
     label_type = 'PDF'
     label_template = 'ECOM26_84_001'
 
-    dhl_datetime_format = "%Y-%m-%dT%H:%M:00 GMT"
+    dhl_datetime_format = "%Y-%m-%dT%H:%M:%S GMT"
     dhl_time_format = "%H:%M"
     utc_offset = None
     eu_codes = ("AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IT", "LV", "LI", "LT",
                 "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "GB")
 
-    def __init__(self, sender, receiver, packages, ship_datetime=datetime.now(), request_pickup=False,
+    def __init__(self, sender, receiver, packages, ship_datetime=None, request_pickup=False,
                  service_type=SERVICE_TYPE_EU, currency=CURRENCY_EUR, unit=UNIT_METRIC,
                  payment_info=CUSTOMS_PAYMENT_CUSTOMER, customs_description=None, customs_value=None,
                  customs_content=CUSTOMS_NON_DOCUMENTS,
@@ -91,6 +89,7 @@ class DHLShipment:
         Formats the shipment date and time in the DHL time format, including the UTC offset
         :return: formatted date time stamp
         """
+        self.ship_datetime = self.ship_datetime or datetime.now()
         if not self.utc_offset:
             # time lib https://docs.python.org/3/library/time.html#time.strftime
             self.utc_offset = time.strftime('%z')  # just take the utc offset from the time lib
