@@ -55,7 +55,6 @@ class DHLShipment:
         self.pickup_time = pickup_time
         self.drop_off_type = None
         self.labels_path = 'labels/'
-        self.response = None
 
     def automatically_set_predictable_fields(self):
         """
@@ -148,6 +147,8 @@ class DHLShipment:
             else:
                 return DHLShipment.SERVICE_TYPE_WORLD
 
+
+    #
     def save_label_to_file(self):
         """
         Saves the shipment label in bytes to a PDF file on disk.

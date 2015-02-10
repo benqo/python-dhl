@@ -4,51 +4,55 @@ from suds.wsse import Security, UsernameToken
 from dhl.resources.address import DHLPerson, DHLCompany
 from dhl.resources.package import DHLPackage
 from dhl.resources.shipment import DHLShipment
-from dhl.resources.response import DHLResponse
+from dhl.resources.response import DHLShipmentResponse, DHLPodResponse, DHLTrackingResponse, DHLTrackingEvent
 
 
 class DHLService:
     """
     Main class with static data and the main shipping methods.
     """
-    test_url = 'https://wsb.dhl.com/sndpt/expressRateBook?wsdl'
-    url = 'https://wsb.dhl.com:443/gbl/expressRateBook?wsdl'
+    shipment_test_url = 'https://wsb.dhl.com/sndpt/expressRateBook?wsdl'
+    shipment_url = 'https://wsb.dhl.com:443/gbl/expressRateBook?wsdl'
+    pod_test_url = 'https://wsb.dhl.com:443/sndpt/getePOD?WSDL'
+    pod_url = 'https://wsb.dhl.com:443/gbl/getePOD?WSDL'
+    tracking_test_url = 'https://wsb.dhl.com:443/sndpt/gblDHLExpressTrack?WSDL'
+    tracking_url = 'https://wsb.dhl.com:443/gbl/glDHLExpressTrack?WSDL'
+
 
     def __init__(self, username, password, account_number, test_mode=False):
         self.username = username
         self.password = password
         self.account_number = account_number
         self.test_mode = test_mode
-        self.client = None
+        self.shipment_client = None
+        self.pod_client = None
+        self.tracking_client = None
 
     def send(self, shipment, message=None):
         """
         Creates the client, the DHL shipment and makes the DHL web request.
         :param shipment: DHLShipment object
         :param message: optional message
-        :return: True if successful, else False
+        :return: DHLResponse
         """
-        if shipment.response and shipment.response.success:
-            print('This shipment has already been sent. Please create a new shipment.')
-            return False
 
-        if not self.client:
-            url = self.test_url if self.test_mode else self.url
-            self.client = Client(url, faults=False)
+        if not self.shipment_client:
+            url = self.shipment_test_url if self.test_mode else self.shipment_url
+            self.shipment_client = Client(url, faults=False)
 
             security = Security()
             token = UsernameToken(self.username, self.password)
             security.tokens.append(token)
-            self.client.set_options(wsse=security)
+            self.shipment_client.set_options(wsse=security)
 
-        dhl_shipment = self.create_dhl_shipment(self.client, shipment)
+        dhl_shipment = self._create_dhl_shipment(self.shipment_client, shipment)
 
-        result_code, reply = self.client.service.createShipmentRequest(message, None, dhl_shipment)
+        result_code, reply = self.shipment_client.service.createShipmentRequest(message, None, dhl_shipment)
 
         try:
             identification_number = reply.ShipmentIdentificationNumber
-            package_result = reply.PackagesResult.PackageResult[0]
-            tracking_number = package_result.TrackingNumber
+            package_results = reply.PackagesResult.PackageResult
+            tracking_numbers = [result.TrackingNumber for result in package_results]
 
             try:
                 dispatch_number = reply.DispatchConfirmationNumber
@@ -58,27 +62,31 @@ class DHLService:
 
             if reply.LabelImage[0].GraphicImage:
                 label_bytes = reply.LabelImage[0].GraphicImage
-                shipment.response = DHLResponse(
+                response = DHLShipmentResponse(
                     success=True,
-                    tracking_number=tracking_number,
+                    tracking_numbers=tracking_numbers,
                     identification_number=identification_number,
                     label_bytes=label_bytes
                 )
 
                 print('Successfully created DHL shipment!')
-                print('  Tracking number: ' + tracking_number)
+                print('  Tracking numbers: ' + str(tracking_numbers))
                 print('  Identification number: ' + identification_number)
                 if dispatch_number:
-                    shipment.response.dispatch_number = dispatch_number
+                    response.dispatch_number = dispatch_number
                     print('  Dispatch number: ' + dispatch_number)
                 print('  PDF label saved.')
-                return True
+                return response
 
             else:
                 print('  No PDF label!')
+                response = DHLShipmentResponse(
+                    success=False,
+                    errors=['No PDF label.']
+                )
         except AttributeError:
             print('Unsuccessful DHL shipment request.')
-            shipment.response = DHLResponse(
+            response = DHLShipmentResponse(
                 success=False
             )
             try:
@@ -89,14 +97,148 @@ class DHLService:
                 for notif in reply.Notification:
                     errors.append([notif._code, notif.Message])
                     print('  [Code: ' + notif._code + ', Message: ' + notif.Message + ']')
-                shipment.response.errors = errors
+                response.errors = errors
             except AttributeError:
                 print('  No notifications.')
+                response.errors = ['No notifications.']
         print()
 
-        return False
+        return response
 
-    def create_dhl_shipment(self, client, shipment):
+
+    def proof_of_delivery(self, shipment_awb, detailed=True):
+        """
+        Connects to DHL ePOD service, and returns the POD for the requested shipment.
+        :param shipment_awb: shipment waybill or identification number
+        :param detailed: if a detailed POD should be returned, else simple
+        :return: (True, pdf bytes) if successful else (False, [errors])
+        """
+        if not self.pod_client:
+            url = self.pod_test_url if self.test_mode else self.pod_url
+            self.pod_client = Client(url, faults=False)
+
+            security = Security()
+            token = UsernameToken(self.username, self.password)
+            security.tokens.append(token)
+            self.pod_client.set_options(wsse=security)
+
+        msg = self._create_dhl_shipment_document(shipment_awb, detailed)
+        code, res = self.pod_client.service.ShipmentDocumentRetrieve(msg)
+
+        try:
+            img = res.Bd.Shp[0].ShpInDoc[0].SDoc[0].Img[0]._Img
+            return DHLPodResponse(True, img)
+        except:
+            return DHLPodResponse(False, errors=[error.DatErrMsg.ErrMsgDtl._DtlDsc for error in res.DatTrErr])
+
+    def tracking(self, shipment_awb):
+        if not self.tracking_client:
+            url = self.tracking_test_url if self.test_mode else self.tracking_url
+            self.tracking_client = Client(url, faults=False)
+
+            security = Security()
+            token = UsernameToken(self.username, self.password)
+            security.tokens.append(token)
+            self.tracking_client.set_options(wsse=security)
+
+        tracking_request = self.tracking_client.factory.create('pubTrackingRequest')
+        tracking_request.TrackingRequest.Request.ServiceHeader.MessageTime = '2015-02-09T18:00:00Z'
+        tracking_request.TrackingRequest.Request.ServiceHeader.MessageReference = '123456789012345678901234567890'
+        tracking_request.TrackingRequest.AWBNumber.ArrayOfAWBNumberItem = shipment_awb
+        tracking_request.TrackingRequest.LevelOfDetails = 'ALL_CHECK_POINTS'
+        tracking_request.TrackingRequest.PiecesEnabled = 'B'
+
+        code, res = self.tracking_client.service.trackShipmentRequest(tracking_request)
+
+        shipment_events = res.TrackingResponse.AWBInfo.ArrayOfAWBInfoItem[
+            0].ShipmentInfo.ShipmentEvent.ArrayOfShipmentEventItem
+        pieces = res.TrackingResponse.AWBInfo.ArrayOfAWBInfoItem[0].Pieces.PieceInfo.ArrayOfPieceInfoItem
+
+        dhl_shipment_events = []
+        for event in shipment_events:
+            tracking_event = DHLTrackingEvent(
+                code=event.ServiceEvent.EventCode,
+                location_code=event.ServiceArea.ServiceAreaCode,
+                location_description=event.ServiceArea.Description
+            )
+            dhl_shipment_events.append(tracking_event)
+
+        dhl_pieces_events = {}
+        for piece in pieces:
+            tracking_number = piece.PieceDetails.LicensePlate
+            dhl_pieces_events[tracking_number] = []
+            for event in piece.PieceEvent.ArrayOfPieceEventItem:
+                try:
+                    dhl_pieces_events[tracking_number].append(
+                        DHLTrackingEvent(
+                            date=event.Date,
+                            time=event.Time,
+                            code=event.ServiceEvent.EventCode,
+                            description=event.ServiceEvent.Description,
+                            location_code=event.ServiceArea.ServiceAreaCode,
+                            location_description=event.ServiceArea.Description
+                        )
+                    )
+                except:
+                    pass
+
+        return DHLTrackingResponse(
+            success=True,
+            shipment_events=dhl_shipment_events,
+            pieces_events=dhl_pieces_events
+        )
+
+
+    ########################################################################
+    # PRIVATE METHODS ######################################################
+    ########################################################################
+
+    def _create_dhl_shipment_document(self, shipment_awb, detailed):
+        """
+        Creates the DHL request for POD retrieve.
+        :param shipment_awb: shipment id
+        :param detailed: if detailed or simple pod
+        :return: message
+        """
+        msg = self.pod_client.factory.create('shipmentDocumentRetrieveReq').MSG
+
+        msg.Hdr._Id = 'id'
+        msg.Hdr._Ver = '1.038'
+        msg.Hdr._Dtm = '2015-02-09T13:00:00'
+        msg.Hdr.Sndr._AppCd = 'DCG'
+        msg.Hdr.Sndr._AppNm = 'DCG'
+
+        msg.Bd.Shp = self.pod_client.factory.create('ns4:CdmShipment_Shipment')
+        msg.Bd.Shp._Id = str(shipment_awb)
+        msg.Bd.Shp.ShpInDoc = self.pod_client.factory.create('ns5:CdmShipment_CustomsDocuments_ShipmentDocumentation')
+        msg.Bd.Shp.ShpInDoc._DocTyCd = 'POD'
+        msg.Bd.Shp.ShpTr = self.pod_client.factory.create('ns4:CdmShipment_ShipmentTransaction')
+        msg.Bd.Shp.ShpTr.SCDtl = self.pod_client.factory.create('ns4:CdmShipment_ShipmentCustomerDetail')
+        if detailed:
+            msg.Bd.Shp.ShpTr.SCDtl._AccNo = self.account_number
+            msg.Bd.Shp.ShpTr.SCDtl._CRlTyCd = 'SP'
+
+        criterias = {
+            'IMG_CONTENT': 'epod-detail' if detailed else 'epod-summary',
+            'IMG_FORMAT': 'PDF',
+            'DOC_RND_REQ': 'true',
+            'EXT_REQ': 'true',
+            'DUPL_HANDL': 'CORE_WB_NO',
+            'SORT_BY': '$INGEST_DATE,D',
+            'LANGUAGE': 'en'
+        }
+        msg.Bd.GenrcRq = self.pod_client.factory.create('ns2:CdmGenericRequest_GenericRequest')
+
+        for key, value in criterias.items():
+            criteria = self.pod_client.factory.create('ns2:CdmGenericRequest_GenericRequestCriteria')
+            criteria._TyCd = key
+            criteria._Val = value
+            msg.Bd.GenrcRq.GenrcRqCritr += (criteria,)
+
+        return msg
+
+
+    def _create_dhl_shipment(self, client, shipment):
         """
         Creates a soap DHL shipment from the DHLShipment and the soap client.
         :param client: soap client
