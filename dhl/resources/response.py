@@ -19,8 +19,8 @@ class DHLTrackingResponse(DHLResponse):
     def __init__(self, success, shipment_events=None, pieces_events=None, errors=None):
         DHLResponse.__init__(self, success, errors)
 
-        self.shipment_events = shipment_events
-        self.pieces_events = pieces_events  # DHLTackingEvents
+        self.shipment_events = shipment_events  # DHLTackingEvent
+        self.pieces_events = pieces_events  # {tracking : [DHLTackingEvent...] ... }
 
 
 class DHLPodResponse(DHLResponse):

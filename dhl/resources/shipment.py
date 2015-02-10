@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import time
 
+
 class DHLShipment:
     """
     A class for creating separate shipments.
@@ -149,7 +150,7 @@ class DHLShipment:
 
 
     #
-    def save_label_to_file(self):
+    def save_label_to_file(self, label_bytes):
         """
         Saves the shipment label in bytes to a PDF file on disk.
         :return:
@@ -157,14 +158,11 @@ class DHLShipment:
         import os.path
         import base64
 
-        if self.response and self.response.success:
-            pdf_decoded = base64.b64decode(self.response.label_bytes)
+        pdf_decoded = base64.b64decode(self.response.label_bytes)
 
-            if not os.path.exists(self.labels_path):
-                os.makedirs(self.labels_path)
+        if not os.path.exists(self.labels_path):
+            os.makedirs(self.labels_path)
 
-            f = open(self.labels_path + self.response.tracking_number + '.PDF', 'wb')
-            f.write(pdf_decoded)
-            f.close()
-        else:
-            print('The shipment has not yet been sent to DHL service and it does not have a label.')
+        f = open(self.labels_path + self.response.tracking_number + '.PDF', 'wb')
+        f.write(pdf_decoded)
+        f.close()
