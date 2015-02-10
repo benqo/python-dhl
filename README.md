@@ -135,16 +135,16 @@ By default the pickup time is set to 1 hour from the creation of the shipment.
 You are now ready to send the shipment. Simply call
 
 ```python
-service.send(shipment)
+response = service.send(shipment)
 ``` 
     
-Once the service is done, it stores the tracking number, identification number and the label in the ``shipment`` object.
+Once the service is done, it stores the tracking number, identification number and the label in the ``DHLShipmentResponse``.
 It also saves the dispatch identification number in case a pickup was requested as well.
 
 You can save the label to a file (by default to folder ``labels/``, you can change this by changing ``shipment.label_path``)
 
 ```python
-shipment.save_label_to_file()
+shipment.save_label_to_file(response.label_bytes)
 ```
     
     
@@ -153,3 +153,15 @@ shipment.save_label_to_file()
 TODO 
     
     How to delete
+    
+## Shipment tracking
+
+TODO
+
+    How to track
+    
+## Proof of delivery
+
+TODO
+
+    How to get POD
