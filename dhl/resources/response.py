@@ -3,6 +3,9 @@ class DHLResponse:
         self.success = success
         self.errors = errors
 
+    def __str__(self):
+        return '%s' % ('Success' if self.success else 'Fail: '+str(self.errors))
+
 
 class DHLShipmentResponse(DHLResponse):
     def __init__(self, success, tracking_numbers=None, identification_number=None, dispatch_number=None,
@@ -21,6 +24,7 @@ class DHLTrackingResponse(DHLResponse):
 
         self.shipment_events = shipment_events  # DHLTackingEvent
         self.pieces_events = pieces_events  # {tracking : [DHLTackingEvent...] ... }
+
 
 
 class DHLPodResponse(DHLResponse):

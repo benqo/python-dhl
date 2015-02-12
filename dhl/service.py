@@ -48,6 +48,8 @@ class DHLService:
         dhl_shipment = self._create_dhl_shipment(self.shipment_client, shipment)
 
         result_code, reply = self.shipment_client.service.createShipmentRequest(message, None, dhl_shipment)
+        if result_code == 500:
+            return DHLPodResponse(False, errors=[reply.detail.detailmessage])
 
         try:
             identification_number = reply.ShipmentIdentificationNumber
@@ -124,6 +126,8 @@ class DHLService:
 
         msg = self._create_dhl_shipment_document(shipment_awb, detailed)
         code, res = self.pod_client.service.ShipmentDocumentRetrieve(msg)
+        if code == 500:
+            return DHLPodResponse(False, errors=[res.detail.detailmessage])
 
         try:
             img = res.Bd.Shp[0].ShpInDoc[0].SDoc[0].Img[0]._Img
@@ -149,44 +153,63 @@ class DHLService:
         tracking_request.TrackingRequest.PiecesEnabled = 'B'
 
         code, res = self.tracking_client.service.trackShipmentRequest(tracking_request)
+        if code == 500:
+            return DHLPodResponse(False, errors=[res.detail.detailmessage])
 
-        shipment_events = res.TrackingResponse.AWBInfo.ArrayOfAWBInfoItem[
-            0].ShipmentInfo.ShipmentEvent.ArrayOfShipmentEventItem
-        pieces = res.TrackingResponse.AWBInfo.ArrayOfAWBInfoItem[0].Pieces.PieceInfo.ArrayOfPieceInfoItem
-
-        dhl_shipment_events = []
-        for event in shipment_events:
-            tracking_event = DHLTrackingEvent(
-                code=event.ServiceEvent.EventCode,
-                location_code=event.ServiceArea.ServiceAreaCode,
-                location_description=event.ServiceArea.Description
+        try:
+            res.TrackingResponse.AWBInfo.ArrayOfAWBInfoItem[0].ShipmentInfo
+        except:
+            message = res.TrackingResponse.AWBInfo.ArrayOfAWBInfoItem[0].Status.ActionStatus
+            return DHLTrackingResponse(
+                success=False,
+                errors=[message]
             )
-            dhl_shipment_events.append(tracking_event)
 
-        dhl_pieces_events = {}
-        for piece in pieces:
-            tracking_number = piece.PieceDetails.LicensePlate
-            dhl_pieces_events[tracking_number] = []
-            for event in piece.PieceEvent.ArrayOfPieceEventItem:
-                try:
-                    dhl_pieces_events[tracking_number].append(
-                        DHLTrackingEvent(
-                            date=event.Date,
-                            time=event.Time,
-                            code=event.ServiceEvent.EventCode,
-                            description=event.ServiceEvent.Description,
-                            location_code=event.ServiceArea.ServiceAreaCode,
-                            location_description=event.ServiceArea.Description
+        try:
+            shipment_events = res.TrackingResponse.AWBInfo.ArrayOfAWBInfoItem[0].ShipmentInfo.ShipmentEvent.ArrayOfShipmentEventItem
+            dhl_shipment_events = []
+            for event in shipment_events:
+                tracking_event = DHLTrackingEvent(
+                    code=event.ServiceEvent.EventCode,
+                    location_code=event.ServiceArea.ServiceAreaCode,
+                    location_description=event.ServiceArea.Description
+                )
+                dhl_shipment_events.append(tracking_event)
+        except:
+            pass
+
+        try:
+            pieces = res.TrackingResponse.AWBInfo.ArrayOfAWBInfoItem[0].Pieces.PieceInfo.ArrayOfPieceInfoItem
+
+            dhl_pieces_events = {}
+            for piece in pieces:
+                tracking_number = piece.PieceDetails.LicensePlate
+                dhl_pieces_events[tracking_number] = []
+                for event in piece.PieceEvent.ArrayOfPieceEventItem:
+                    try:
+                        dhl_pieces_events[tracking_number].append(
+                            DHLTrackingEvent(
+                                date=event.Date,
+                                time=event.Time,
+                                code=event.ServiceEvent.EventCode,
+                                description=event.ServiceEvent.Description,
+                                location_code=event.ServiceArea.ServiceAreaCode,
+                                location_description=event.ServiceArea.Description
+                            )
                         )
-                    )
-                except:
-                    pass
+                    except:
+                        pass
 
-        return DHLTrackingResponse(
-            success=True,
-            shipment_events=dhl_shipment_events,
-            pieces_events=dhl_pieces_events
-        )
+            return DHLTrackingResponse(
+                success=True,
+                shipment_events=dhl_shipment_events,
+                pieces_events=dhl_pieces_events
+            )
+        except:
+            return DHLTrackingResponse(
+                success=False,
+                errors=['No pieces found.']
+            )
 
 
     ########################################################################
