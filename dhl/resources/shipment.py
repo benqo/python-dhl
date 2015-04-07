@@ -33,10 +33,14 @@ class DHLShipment:
     dhl_datetime_format = "%Y-%m-%dT%H:%M:%S GMT"
     dhl_time_format = "%H:%M"
     utc_offset = None
-    eu_codes = ("AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IT", "LV", "LI", "LT",
-                "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "GB")
+    eu_codes = [
+        'BE', 'BG', 'CZ', 'DK', 'DE', 'EE', 'IE', 'GR', 'ES', 'FR',
+        'HR', 'IT', 'CY', 'LV', 'LT', 'LU', 'HU', 'MT', 'NL', 'AT',
+        'PL', 'PT', 'RO', 'SI', 'SK', 'FI', 'SE', 'GB',
+    ]
+    eu_codes += ['UK']  # different notations
 
-    def __init__(self, sender, receiver, packages, ship_datetime=None, request_pickup=False,
+    def __init__(self, sender, receiver, packages, ship_datetime=None, request_pickup=False, reference_code=None,
                  service_type=SERVICE_TYPE_EU, currency=CURRENCY_EUR, unit=UNIT_METRIC,
                  payment_info=CUSTOMS_PAYMENT_CUSTOMER, customs_description=None, customs_value=None,
                  customs_content=CUSTOMS_NON_DOCUMENTS,
@@ -46,6 +50,7 @@ class DHLShipment:
         self.packages = packages
         self.ship_datetime = ship_datetime
         self.request_pickup = request_pickup
+        self.reference_code = reference_code
         self.service_type = service_type
         self.currency = currency
         self.unit = unit
@@ -158,11 +163,11 @@ class DHLShipment:
         import os.path
         import base64
 
-        pdf_decoded = base64.b64decode(self.response.label_bytes)
+        pdf_decoded = base64.b64decode(label_bytes)
 
         if not os.path.exists(self.labels_path):
             os.makedirs(self.labels_path)
 
-        f = open(self.labels_path + self.response.tracking_number + '.PDF', 'wb')
+        f = open(self.labels_path + 'label' + '.PDF', 'wb')
         f.write(pdf_decoded)
         f.close()
