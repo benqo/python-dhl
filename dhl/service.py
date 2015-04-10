@@ -286,6 +286,7 @@ class DHLService:
         dhl_shipment.ShipmentInfo.DropOffType = shipment.drop_off_type
         dhl_shipment.ShipTimestamp = shipment.get_dhl_formatted_shipment_time()
         dhl_shipment.PickupLocationCloseTime = shipment.get_dhl_formatted_pickup_time()
+        dhl_shipment.SpecialPickupInstruction = shipment.special_pickup_instructions
 
         dhl_shipment.Ship.Shipper.Contact.PersonName = shipment.sender.person_name
         dhl_shipment.Ship.Shipper.Contact.CompanyName = shipment.sender.company_name

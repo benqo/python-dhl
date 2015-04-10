@@ -43,7 +43,7 @@ class DHLShipment:
     def __init__(self, sender, receiver, packages, ship_datetime=None, request_pickup=False, reference_code=None,
                  service_type=SERVICE_TYPE_EU, currency=CURRENCY_EUR, unit=UNIT_METRIC,
                  payment_info=CUSTOMS_PAYMENT_CUSTOMER, customs_description=None, customs_value=None,
-                 customs_content=CUSTOMS_NON_DOCUMENTS,
+                 customs_content=CUSTOMS_NON_DOCUMENTS, special_pickup_instructions=None,
                  pickup_time=None):
         self.sender = sender
         self.receiver = receiver
@@ -61,6 +61,7 @@ class DHLShipment:
         self.pickup_time = pickup_time
         self.drop_off_type = None
         self.labels_path = 'labels/'
+        self.special_pickup_instructions = special_pickup_instructions
 
     def automatically_set_predictable_fields(self):
         """
