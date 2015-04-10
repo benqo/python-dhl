@@ -78,7 +78,6 @@ class DHLService:
                 if dispatch_number:
                     response.dispatch_number = dispatch_number
                     print('  Dispatch number: ' + dispatch_number)
-                print('  PDF label saved.')
                 return response
 
             else:
