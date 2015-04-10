@@ -68,7 +68,8 @@ class DHLService:
                     success=True,
                     tracking_numbers=tracking_numbers,
                     identification_number=identification_number,
-                    label_bytes=label_bytes
+                    label_bytes=label_bytes,
+                    dispatch_number=dispatch_number
                 )
 
                 print('Successfully created DHL shipment!')
