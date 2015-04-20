@@ -154,7 +154,7 @@ class DHLService:
 
         code, res = self.tracking_client.service.trackShipmentRequest(tracking_request)
         if code == 500:
-            return DHLPodResponse(False, errors=[res.detail.detailmessage])
+            return DHLTrackingResponse(False, errors=[res.detail.detailmessage])
 
         try:
             res.TrackingResponse.AWBInfo.ArrayOfAWBInfoItem[0].ShipmentInfo

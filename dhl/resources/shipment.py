@@ -79,7 +79,7 @@ class DHLShipment:
         :return: the correct pickup time, if the courier pickup is request, else None
         """
         if self.request_pickup:
-            return self.pickup_time or datetime.now() + timedelta(hours=1)
+            return self.pickup_time or (datetime.now() + timedelta(hours=1))
         return None
 
     def get_drop_off_type(self):
