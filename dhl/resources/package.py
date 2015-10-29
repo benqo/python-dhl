@@ -8,5 +8,5 @@ class DHLPackage:
         self.length = length  # cm
         self.width = width  # cm
         self.height = height  # cm
-        self.price = price
+        self.price = price or 0.0
         self.description = description

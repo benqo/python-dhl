@@ -7,6 +7,32 @@ class DHLResponse:
         return '%s' % ('Success' if self.success else 'Fail: '+str(self.errors))
 
 
+class DHLRateResponse(DHLResponse):
+    def __init__(self, success, services, errors=None):
+        DHLResponse.__init__(self, success, errors)
+        list_services = []
+        for service in services:
+            service_dict = {
+                'type': service._type,
+                'total_net': {
+                    'currency': service.TotalNet.Currency,
+                    'amount': service.TotalNet.Amount
+                },
+                'charges': [],
+                'delivery_time': service.DeliveryTime,
+                'cutoff_time': service.CutoffTime,
+                'next_business_day_ind': service.NextBusinessDayInd
+            }
+            for charge in service.Charges.Charge:
+                service_dict['charges'].append({
+                    'currency': service.Charges.Currency,
+                    'charge_type': charge.ChargeType,
+                    'charge_amount': charge.ChargeAmount
+                })
+            list_services.append(service_dict)
+        self.services = list_services
+
+
 class DHLShipmentResponse(DHLResponse):
     def __init__(self, success, tracking_numbers=None, identification_number=None, dispatch_number=None,
                  label_bytes=None, errors=None):

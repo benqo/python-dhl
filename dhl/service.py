@@ -4,16 +4,18 @@ from suds.wsse import Security, UsernameToken
 from dhl.resources.address import DHLPerson, DHLCompany
 from dhl.resources.package import DHLPackage
 from dhl.resources.shipment import DHLShipment
-from dhl.resources.response import DHLShipmentResponse, DHLPodResponse, DHLTrackingResponse, DHLTrackingEvent
+from dhl.resources.response import DHLShipmentResponse, DHLPodResponse, \
+    DHLTrackingResponse, DHLTrackingEvent, DHLRateResponse
 
 
 class DHLService:
     """
     Main class with static data and the main shipping methods.
     """
-    shipment_test_url = 'https://wsb.dhl.com/sndpt/expressRateBook?wsdl'
+    shipment_test_url = \
+        'https://wsbexpress.dhl.com:443/sndpt/expressRateBook?wsdl'
     shipment_url = 'https://wsb.dhl.com:443/gbl/expressRateBook?wsdl'
-    pod_test_url = 'https://wsb.dhl.com:443/sndpt/getePOD?WSDL'
+    pod_test_url = 'https://wsbexpress.dhl.com:443/sndpt/getePOD?WSDL'
     pod_url = 'https://wsb.dhl.com:443/gbl/getePOD?WSDL'
     tracking_test_url = 'https://wsb.dhl.com:443/sndpt/gblDHLExpressTrack?WSDL'
     tracking_url = 'https://wsb.dhl.com:443/gbl/glDHLExpressTrack?WSDL'
@@ -27,6 +29,38 @@ class DHLService:
         self.shipment_client = None
         self.pod_client = None
         self.tracking_client = None
+
+    def rate_request(self, shipment, message=None):
+        """
+        Contacts to DHL Rate Request to obtain carrier rates for this shipment
+        :param shipment: DHLShipment object
+        :param message: optional message
+        :return: DHLResponse
+        """
+        if not self.shipment_client:
+            url = self.shipment_test_url if self.test_mode else \
+                self.shipment_url
+            self.shipment_client = Client(url, faults=False)
+
+            security = Security()
+            token = UsernameToken(self.username, self.password)
+            security.tokens.append(token)
+            self.shipment_client.set_options(wsse=security)
+
+        dhl_shipment = self._create_dhl_shipment_type2(self.shipment_client,
+                                                       shipment)
+        result_code, reply = self.shipment_client.service.getRateRequest(
+            None, dhl_shipment)
+        if result_code == 500:
+            return DHLPodResponse(False, errors=[reply.detail.detailmessage])
+        for rate_reply in reply:
+            notif = rate_reply.Notification
+            if notif._code != '0':
+                print('[Code: ' + notif._code + ', '
+                      'Message: ' + notif.Message + ']')
+                return DHLPodResponse(False, errors=[(notif._code,
+                                                      notif.Message)])
+            return DHLRateResponse(True, rate_reply.Service)
 
     def send(self, shipment, message=None):
         """
@@ -260,7 +294,6 @@ class DHLService:
 
         return msg
 
-
     def _create_dhl_shipment(self, client, shipment):
         """
         Creates a soap DHL shipment from the DHLShipment and the soap client.
@@ -319,6 +352,66 @@ class DHLService:
             dhl_package.Dimensions.Width = str(package.width)
             dhl_package.Dimensions.Height = str(package.height)
             dhl_package.CustomerReferences = shipment.reference_code
+
+            dhl_shipment.Packages.RequestedPackages += (dhl_package,)
+            counter += 1
+
+        return dhl_shipment
+
+    def _create_dhl_shipment_type2(self, client, shipment):
+        """
+        Creates a SOAP DHL Shipment type2. This Shipment type is used for
+        rate requests
+        :param client: soap client
+        :param shipment: DHLShipment object
+        :return: soap dhl shipment
+        """
+        dhl_shipment = client.factory.create(
+            'ns2:docTypeRef_RequestedShipmentType2')
+        dhl_shipment.Content = 'NON_DOCUMENTS'
+        dhl_shipment.NextBusinessDay = 'N'
+        dhl_shipment.UnitOfMeasurement = shipment.unit
+        dhl_shipment.DropOffType.value = shipment.drop_off_type
+        dhl_shipment.Account = self.account_number
+        dhl_shipment.PaymentInfo = shipment.payment_info
+        dhl_shipment.ShipTimestamp = shipment.get_dhl_formatted_shipment_time()
+
+        dhl_shipment.Ship.Shipper.StreetLines =\
+            shipment.sender.street_lines
+        dhl_shipment.Ship.Shipper.StreetLines2 =\
+            shipment.sender.street_lines2
+        dhl_shipment.Ship.Shipper.StreetLines3 =\
+            shipment.sender.street_lines3
+        dhl_shipment.Ship.Shipper.City =\
+            shipment.sender.city
+        dhl_shipment.Ship.Shipper.PostalCode =\
+            shipment.sender.postal_code
+        dhl_shipment.Ship.Shipper.CountryCode =\
+            shipment.sender.country_code
+
+        dhl_shipment.Ship.Recipient.StreetLines =\
+            shipment.receiver.street_lines
+        dhl_shipment.Ship.Recipient.StreetLines2 =\
+            shipment.receiver.street_lines2
+        dhl_shipment.Ship.Recipient.StreetLines3 =\
+            shipment.receiver.street_lines3
+        dhl_shipment.Ship.Recipient.City =\
+            shipment.receiver.city
+        dhl_shipment.Ship.Recipient.PostalCode =\
+            shipment.receiver.postal_code
+        dhl_shipment.Ship.Recipient.CountryCode =\
+            shipment.receiver.country_code
+
+        counter = 1
+        dhl_shipment.Packages.RequestedPackages = ()
+        for package in shipment.packages:
+            dhl_package = client.factory.create(
+                'ns2:docTypeRef_RequestedPackagesType2')
+            dhl_package._number = str(counter)
+            dhl_package.Weight.Value = str(package.weight)
+            dhl_package.Dimensions.Length = str(package.length)
+            dhl_package.Dimensions.Width = str(package.width)
+            dhl_package.Dimensions.Height = str(package.height)
 
             dhl_shipment.Packages.RequestedPackages += (dhl_package,)
             counter += 1
