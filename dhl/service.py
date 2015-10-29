@@ -12,14 +12,13 @@ class DHLService:
     """
     Main class with static data and the main shipping methods.
     """
-    shipment_test_url = \
-        'https://wsbexpress.dhl.com:443/sndpt/expressRateBook?wsdl'
-    shipment_url = 'https://wsb.dhl.com:443/gbl/expressRateBook?wsdl'
-    pod_test_url = 'https://wsbexpress.dhl.com:443/sndpt/getePOD?WSDL'
-    pod_url = 'https://wsb.dhl.com:443/gbl/getePOD?WSDL'
-    tracking_test_url = 'https://wsb.dhl.com:443/sndpt/gblDHLExpressTrack?WSDL'
-    tracking_url = 'https://wsb.dhl.com:443/gbl/glDHLExpressTrack?WSDL'
 
+    shipment_test_url = 'https://wsbexpress.dhl.com:443/sndpt/expressRateBook?WSDL'
+    shipment_url = 'https://wsbexpress.dhl.com:443/gbl/expressRateBook?WSDL'
+    pod_test_url = 'https://wsbexpress.dhl.com:443/sndpt/getePOD?WSDL'
+    pod_url = 'https://wsbexpress.dhl.com:443/gbl/getePOD?WSDL'
+    tracking_test_url = 'https://wsbexpress.dhl.com:443/sndpt/glDHLExpressTrack?WSDL'
+    tracking_url = 'https://wsbexpress.dhl.com:443/gbl/glDHLExpressTrack?WSDL'
 
     def __init__(self, username, password, account_number, test_mode=False):
         self.username = username
