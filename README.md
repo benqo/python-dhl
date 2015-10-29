@@ -119,6 +119,30 @@ Note the date has to be in a future and it has to be valid (no weekends, holiday
 Please check the ``DHLShipment`` class for the full list of possible options.
     
    
+#### Request Rates for a shipment
+It's possible to request service rates from DHL, call
+
+```python
+rate_response = service.rate_request(shipment)
+```
+
+Once the request finish and if is a successful request it will store the services with the rates for each service
+
+```python
+print rate_response.services
+
+[{'next_business_day_ind': N,
+  'delivery_time': datetime.datetime(2015, 10, 30, 12, 0),
+  'charges': [
+        {'charge_type': MEDICAL EXPRESS, 'currency': EUR, 'charge_amount': 319.50},
+        {'charge_type': FUEL SURCHARGE, 'currency': EUR, 'charge_amount': 30.35}
+  ],
+  'total_net': {'currency': EUR, 'amount': 349.85},
+  'cutoff_time': datetime.datetime(2015, 10, 29, 18, 0),
+  'type': C
+}]
+```
+
 #### Request a pickup
 If you wish to request a courier pickup, set the variable and provide the latest pickup time.
     
