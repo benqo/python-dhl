@@ -44,7 +44,7 @@ class DHLShipment:
                  service_type=SERVICE_TYPE_EU, currency=CURRENCY_EUR, unit=UNIT_METRIC,
                  payment_info=CUSTOMS_PAYMENT_CUSTOMER, customs_description=None, customs_value=None,
                  customs_content=CUSTOMS_NON_DOCUMENTS, special_pickup_instructions=None,
-                 pickup_time=None):
+                 pickup_time=None, drop_off_type=None):
         self.sender = sender
         self.receiver = receiver
         self.packages = packages
@@ -59,7 +59,7 @@ class DHLShipment:
         self.customs_content = customs_content
         self.customs_value = customs_value
         self.pickup_time = pickup_time
-        self.drop_off_type = None
+        self.drop_off_type = drop_off_type
         self.labels_path = 'labels/'
         self.special_pickup_instructions = special_pickup_instructions
 
