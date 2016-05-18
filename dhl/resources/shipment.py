@@ -43,7 +43,7 @@ class DHLShipment:
     def __init__(self, sender, receiver, packages, ship_datetime=None, request_pickup=False, reference_code=None,
                  service_type=SERVICE_TYPE_EU, currency=CURRENCY_EUR, unit=UNIT_METRIC,
                  payment_info=CUSTOMS_PAYMENT_CUSTOMER, customs_description=None, customs_value=None,
-                 customs_content=CUSTOMS_NON_DOCUMENTS, special_pickup_instructions=None,
+                 customs_content=CUSTOMS_DOCUMENTS, special_pickup_instructions=None,
                  pickup_time=None, drop_off_type=None):
         self.sender = sender
         self.receiver = receiver
@@ -72,6 +72,7 @@ class DHLShipment:
         self.customs_description, self.customs_value = self.get_customs_description_and_value()
         self.drop_off_type = self.get_drop_off_type()
         self.pickup_time = self.get_pickup_time()
+        self.currency = self.get_currency()
 
     def get_pickup_time(self):
         """
@@ -81,6 +82,16 @@ class DHLShipment:
         if self.request_pickup:
             return self.pickup_time or (datetime.now() + timedelta(hours=1))
         return None
+
+    def get_currency(self):
+        """
+        Returns the correct currency
+        :return: the correct currency or None
+        """
+        currency = self.currency
+        if self.service_type == DHLShipment.SERVICE_TYPE_WORLD:
+            currency = None
+        return currency
 
     def get_drop_off_type(self):
         """
@@ -129,10 +140,13 @@ class DHLShipment:
         for package in self.packages:  # automatically generate description and value for customs
             customs_description += package.description + ", "
             customs_value += package.price
+        if self.service_type == DHLShipment.SERVICE_TYPE_WORLD:
+            customs_value = ''
 
         # if the customs variables are not set, use the generated ones
         customs_description = self.customs_description or customs_description[:-2]
         customs_value = self.customs_value or customs_value
+        
 
         return customs_description, customs_value
 
