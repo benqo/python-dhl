@@ -63,16 +63,16 @@ class DHLShipment:
         self.labels_path = 'labels/'
         self.special_pickup_instructions = special_pickup_instructions
 
-    def automatically_set_predictable_fields(self):
+    def automatically_set_predictable_fields(self, auto=True):
         """
         Sets the shipment fields that are calculated/predicted from other fields.
         :return:
         """
-        self.service_type = self.get_service_type()
+        if auto:
+            self.service_type = self.get_service_type()
         self.customs_description, self.customs_value = self.get_customs_description_and_value()
         self.drop_off_type = self.get_drop_off_type()
         self.pickup_time = self.get_pickup_time()
-        self.currency = self.get_currency()
 
     def get_pickup_time(self):
         """
@@ -82,16 +82,6 @@ class DHLShipment:
         if self.request_pickup:
             return self.pickup_time or (datetime.now() + timedelta(hours=1))
         return None
-
-    def get_currency(self):
-        """
-        Returns the correct currency
-        :return: the correct currency or None
-        """
-        currency = self.currency
-        if self.service_type == DHLShipment.SERVICE_TYPE_WORLD:
-            currency = None
-        return currency
 
     def get_drop_off_type(self):
         """
@@ -140,13 +130,11 @@ class DHLShipment:
         for package in self.packages:  # automatically generate description and value for customs
             customs_description += package.description + ", "
             customs_value += package.price
-        if self.service_type == DHLShipment.SERVICE_TYPE_WORLD:
-            customs_value = ''
 
         # if the customs variables are not set, use the generated ones
         customs_description = self.customs_description or customs_description[:-2]
         customs_value = self.customs_value or customs_value
-        
+
 
         return customs_description, customs_value
 

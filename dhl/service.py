@@ -61,7 +61,7 @@ class DHLService:
                                                       notif.Message)])
             return DHLRateResponse(True, rate_reply.Service)
 
-    def send(self, shipment, message=None):
+    def send(self, shipment, message=None, auto=True):
         """
         Creates the client, the DHL shipment and makes the DHL web request.
         :param shipment: DHLShipment object
@@ -78,7 +78,7 @@ class DHLService:
             security.tokens.append(token)
             self.shipment_client.set_options(wsse=security)
 
-        dhl_shipment = self._create_dhl_shipment(self.shipment_client, shipment)
+        dhl_shipment = self._create_dhl_shipment(self.shipment_client, shipment, auto=auto)
 
         result_code, reply = self.shipment_client.service.createShipmentRequest(message, None, dhl_shipment)
         if result_code == 500:
@@ -293,14 +293,14 @@ class DHLService:
 
         return msg
 
-    def _create_dhl_shipment(self, client, shipment):
+    def _create_dhl_shipment(self, client, shipment, auto=True):
         """
         Creates a soap DHL shipment from the DHLShipment and the soap client.
         :param client: soap client
         :param shipment: DHLShipment object
         :return: soap dhl shipment
         """
-        shipment.automatically_set_predictable_fields()
+        shipment.automatically_set_predictable_fields(auto=auto)
 
         dhl_shipment = client.factory.create('ns4:docTypeRef_RequestedShipmentType')
         dhl_shipment.ShipmentInfo.Currency = shipment.currency
