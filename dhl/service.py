@@ -52,6 +52,8 @@ class DHLService:
             None, dhl_shipment)
         if result_code == 500:
             return DHLPodResponse(False, errors=[reply.detail.detailmessage])
+        elif result_code == 401:
+            return DHLPodResponse(False, errors=[('401', 'Unauthorized')])
         for rate_reply in reply:
             notif = rate_reply.Notification
             if notif._code != '0':
