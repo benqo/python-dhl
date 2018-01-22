@@ -353,7 +353,7 @@ class DHLService:
             dhl_package.Dimensions.Width = str(package.width)
             dhl_package.Dimensions.Height = str(package.height)
             dhl_package.CustomerReferences = shipment.reference_code
-
+            dhl_package.PackageContentDescription = str(package.description)
             dhl_shipment.Packages.RequestedPackages += (dhl_package,)
             counter += 1
 
@@ -413,6 +413,7 @@ class DHLService:
             dhl_package.Dimensions.Length = str(package.length)
             dhl_package.Dimensions.Width = str(package.width)
             dhl_package.Dimensions.Height = str(package.height)
+            dhl_package.PackageContentDescription = str(package.description)
 
             dhl_shipment.Packages.RequestedPackages += (dhl_package,)
             counter += 1
