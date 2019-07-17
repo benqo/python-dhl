@@ -40,7 +40,7 @@ class DHLShipment:
     ]
     eu_codes += ['UK']  # different notations
 
-    def __init__(self, sender, receiver, packages, ship_datetime=None, request_pickup=False, reference_code=None,
+    def __init__(self, sender, receiver, packages, registration_numbers=None,ship_datetime=None, request_pickup=False, reference_code=None,
                  service_type=SERVICE_TYPE_EU, currency=CURRENCY_EUR, unit=UNIT_METRIC,
                  payment_info=CUSTOMS_PAYMENT_CUSTOMER, customs_description=None, customs_value=None,
                  customs_content=CUSTOMS_DOCUMENTS, special_pickup_instructions=None,
@@ -48,6 +48,7 @@ class DHLShipment:
         self.sender = sender
         self.receiver = receiver
         self.packages = packages
+        self.registration_numbers = registration_numbers
         self.ship_datetime = ship_datetime
         self.request_pickup = request_pickup
         self.reference_code = reference_code
