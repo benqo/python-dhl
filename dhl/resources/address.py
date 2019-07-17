@@ -36,3 +36,10 @@ class DHLCompany(DHLPerson):
 
         self.company_name = company_name
 
+
+class DHLRegistrationNumbers(DHLAddress):
+
+    def __init__(self, vat, type_code_vat, country_code_vat):
+        self.vat = vat
+        self.type_code = type_code_vat
+        self.country_code_vat = country_code_vat

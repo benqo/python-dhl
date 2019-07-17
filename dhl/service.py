@@ -1,7 +1,7 @@
 from suds.client import Client
 from suds.wsse import Security, UsernameToken
 
-from dhl.resources.address import DHLPerson, DHLCompany
+from dhl.resources.address import DHLPerson, DHLCompany, DHLRegistrationNumbers 
 from dhl.resources.package import DHLPackage
 from dhl.resources.shipment import DHLShipment
 from dhl.resources.response import DHLShipmentResponse, DHLPodResponse, \
@@ -81,7 +81,6 @@ class DHLService:
             self.shipment_client.set_options(wsse=security)
 
         dhl_shipment = self._create_dhl_shipment(self.shipment_client, shipment, auto=auto)
-
         result_code, reply = self.shipment_client.service.createShipmentRequest(message, None, dhl_shipment)
         if result_code == 500:
             return DHLPodResponse(False, errors=[reply.detail.detailmessage])
@@ -303,7 +302,6 @@ class DHLService:
         :return: soap dhl shipment
         """
         shipment.automatically_set_predictable_fields(auto=auto)
-
         dhl_shipment = client.factory.create('ns4:docTypeRef_RequestedShipmentType')
         dhl_shipment.ShipmentInfo.Currency = shipment.currency
         dhl_shipment.ShipmentInfo.UnitOfMeasurement = shipment.unit
@@ -331,7 +329,13 @@ class DHLService:
         dhl_shipment.Ship.Shipper.Address.City = shipment.sender.city
         dhl_shipment.Ship.Shipper.Address.PostalCode = shipment.sender.postal_code
         dhl_shipment.Ship.Shipper.Address.CountryCode = shipment.sender.country_code
-
+        dhl_shipment.Ship.Shipper.RegistrationNumbers = client.factory.create('ns4:docTypeRef_RegistrationNumbers')
+        registration_numbers = client.factory.create('ns4:docTypeRef_RegistrationNumber')
+        if shipment.registration_numbers:
+            registration_numbers.Number = shipment.registration_numbers.vat
+            registration_numbers.NumberTypeCode = shipment.registration_numbers.type_code
+            registration_numbers.NumberIssuerCountryCode = shipment.registration_numbers.country_code_vat
+            dhl_shipment.Ship.Shipper.RegistrationNumbers.RegistrationNumber += (registration_numbers,)
         dhl_shipment.Ship.Recipient.Contact.PersonName = shipment.receiver.person_name
         dhl_shipment.Ship.Recipient.Contact.CompanyName = shipment.receiver.company_name
         dhl_shipment.Ship.Recipient.Contact.PhoneNumber = shipment.receiver.phone
@@ -356,7 +360,6 @@ class DHLService:
             dhl_package.PackageContentDescription = str(package.description)
             dhl_shipment.Packages.RequestedPackages += (dhl_package,)
             counter += 1
-
         return dhl_shipment
 
     def _create_dhl_shipment_type2(self, client, shipment):
