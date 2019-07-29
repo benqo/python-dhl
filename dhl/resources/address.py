@@ -22,7 +22,8 @@ class DHLPerson(DHLAddress):
 
         self.person_name = person_name
         self.phone = phone
-        self.email = email
+        if email:
+            self.email = email
         self.company_name = person_name  # DHL requires the company name, so we use person name
 
 
