@@ -323,7 +323,8 @@ class DHLService:
         dhl_shipment.Ship.Shipper.Contact.PersonName = shipment.sender.person_name
         dhl_shipment.Ship.Shipper.Contact.CompanyName = shipment.sender.company_name
         dhl_shipment.Ship.Shipper.Contact.PhoneNumber = shipment.sender.phone
-        dhl_shipment.Ship.Shipper.Contact.EmailAddress = shipment.sender.email
+        if shipment.sender.email:
+            dhl_shipment.Ship.Shipper.Contact.EmailAddress = shipment.sender.email
         dhl_shipment.Ship.Shipper.Address.StreetLines = shipment.sender.street_lines
         dhl_shipment.Ship.Shipper.Address.StreetLines2 = shipment.sender.street_lines2
         dhl_shipment.Ship.Shipper.Address.StreetLines3 = shipment.sender.street_lines3
@@ -340,7 +341,8 @@ class DHLService:
         dhl_shipment.Ship.Recipient.Contact.PersonName = shipment.receiver.person_name
         dhl_shipment.Ship.Recipient.Contact.CompanyName = shipment.receiver.company_name
         dhl_shipment.Ship.Recipient.Contact.PhoneNumber = shipment.receiver.phone
-        dhl_shipment.Ship.Recipient.Contact.EmailAddress = shipment.receiver.email
+        if shipment.receiver.email:
+            dhl_shipment.Ship.Recipient.Contact.EmailAddress = shipment.receiver.email
         dhl_shipment.Ship.Recipient.Address.StreetLines = shipment.receiver.street_lines
         dhl_shipment.Ship.Recipient.Address.StreetLines2 = shipment.receiver.street_lines2
         dhl_shipment.Ship.Recipient.Address.StreetLines3 = shipment.receiver.street_lines3
