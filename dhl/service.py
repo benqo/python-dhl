@@ -308,7 +308,7 @@ class DHLService:
         dhl_shipment.ShipmentInfo.LabelType = shipment.label_type
         dhl_shipment.ShipmentInfo.LabelTemplate = shipment.label_template
         dhl_shipment.ShipmentInfo.Account = self.account_number
-        dhl_shipment.ShipmentInfo.PackagesCount = str(len(shipment.packages))
+        #dhl_shipment.ShipmentInfo.PackagesCount = str(len(shipment.packages))
         dhl_shipment.PaymentInfo = shipment.payment_info
         dhl_shipment.ShipmentInfo.ServiceType = shipment.service_type
         dhl_shipment.InternationalDetail.Commodities.Description = shipment.customs_description
