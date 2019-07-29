@@ -81,7 +81,7 @@ class DHLService:
             self.shipment_client.set_options(wsse=security)
 
         dhl_shipment = self._create_dhl_shipment(self.shipment_client, shipment, auto=auto)
-        result_code, reply = self.shipment_client.service.createShipmentRequest(message, None, dhl_shipment)
+        result_code, reply = self.shipment_client.service.createShipmentRequest(message, None, None, dhl_shipment)
         if result_code == 500:
             return DHLPodResponse(False, errors=[reply.detail.detailmessage])
 
@@ -308,6 +308,7 @@ class DHLService:
         dhl_shipment.ShipmentInfo.LabelType = shipment.label_type
         dhl_shipment.ShipmentInfo.LabelTemplate = shipment.label_template
         dhl_shipment.ShipmentInfo.Account = self.account_number
+        dhl_shipment.ShipmentInfo.RequestAdditionalInformation = 'N'
         #dhl_shipment.ShipmentInfo.PackagesCount = str(len(shipment.packages))
         dhl_shipment.PaymentInfo = shipment.payment_info
         dhl_shipment.ShipmentInfo.ServiceType = shipment.service_type
