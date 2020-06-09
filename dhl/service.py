@@ -309,6 +309,9 @@ class DHLService:
         dhl_shipment.ShipmentInfo.LabelTemplate = shipment.label_template
         dhl_shipment.ShipmentInfo.Account = self.account_number
         dhl_shipment.ShipmentInfo.RequestAdditionalInformation = 'N'
+        dhl_shipment.ShipmentInfo.RequestEstimatedDeliveryDate = 'N'
+        dhl_shipment.ShipmentInfo.EstimatedDeliveryDateType = 'QDDC'
+        dhl_shipment.ShipmentInfo.RequestPickupDetails = 'N'
         #dhl_shipment.ShipmentInfo.PackagesCount = str(len(shipment.packages))
         dhl_shipment.PaymentInfo = shipment.payment_info
         dhl_shipment.ShipmentInfo.ServiceType = shipment.service_type
