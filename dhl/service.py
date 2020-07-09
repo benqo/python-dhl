@@ -6,6 +6,15 @@ from dhl.resources.package import DHLPackage
 from dhl.resources.shipment import DHLShipment
 from dhl.resources.response import DHLShipmentResponse, DHLPodResponse, \
     DHLTrackingResponse, DHLTrackingEvent, DHLRateResponse
+from suds.plugin import MessagePlugin
+
+
+class LogPlugin(MessagePlugin):
+    def sending(self, context):
+        print(str(context.envelope))
+
+    def received(self, context):
+        print(str(context.reply))
 
 
 class DHLService:
@@ -39,7 +48,7 @@ class DHLService:
         if not self.shipment_client:
             url = self.shipment_test_url if self.test_mode else \
                 self.shipment_url
-            self.shipment_client = Client(url, faults=False)
+            self.shipment_client = Client(url, faults=False, plugins=[LogPlugin()])
 
             security = Security()
             token = UsernameToken(self.username, self.password)
@@ -308,13 +317,15 @@ class DHLService:
         dhl_shipment.ShipmentInfo.LabelType = shipment.label_type
         dhl_shipment.ShipmentInfo.LabelTemplate = shipment.label_template
         dhl_shipment.ShipmentInfo.Account = self.account_number
+        dhl_shipment.ShipmentInfo.ServiceType = shipment.service_type
         dhl_shipment.ShipmentInfo.RequestAdditionalInformation = 'N'
         dhl_shipment.ShipmentInfo.RequestEstimatedDeliveryDate = 'N'
         dhl_shipment.ShipmentInfo.EstimatedDeliveryDateType = 'QDDC'
         dhl_shipment.ShipmentInfo.RequestPickupDetails = 'N'
         #dhl_shipment.ShipmentInfo.PackagesCount = str(len(shipment.packages))
-        dhl_shipment.PaymentInfo = shipment.payment_info
-        dhl_shipment.ShipmentInfo.ServiceType = shipment.service_type
+        dhl_shipment.PaymentInfo = shipment.payment_info_paperless
+        dhl_shipment.ShipmentInfo.SpecialServices.Service = client.factory.create('Service')
+        dhl_shipment.ShipmentInfo.SpecialServices.Service.ServiceType = shipment.service_type_paperless
         dhl_shipment.InternationalDetail.Commodities.Description = shipment.customs_description
         dhl_shipment.InternationalDetail.Commodities.CustomsValue = shipment.customs_value
         dhl_shipment.InternationalDetail.Content = shipment.customs_content
@@ -322,7 +333,8 @@ class DHLService:
         dhl_shipment.ShipTimestamp = shipment.get_dhl_formatted_shipment_time()
         dhl_shipment.PickupLocationCloseTime = shipment.get_dhl_formatted_pickup_time()
         dhl_shipment.SpecialPickupInstruction = shipment.special_pickup_instructions
-
+        dhl_shipment.ShipmentInfo.PaperlessTradeEnabled = shipment.paperles_sistem
+        dhl_shipment.ShipmentInfo.PaperlessTradeImage = shipment.invoice_paperles
         dhl_shipment.Ship.Shipper.Contact.PersonName = shipment.sender.person_name
         dhl_shipment.Ship.Shipper.Contact.CompanyName = shipment.sender.company_name
         dhl_shipment.Ship.Shipper.Contact.PhoneNumber = shipment.sender.phone

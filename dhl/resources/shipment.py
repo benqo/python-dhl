@@ -21,8 +21,8 @@ class DHLShipment:
     UNIT_METRIC = 'SI'
     UNIT_IMPERIAL = 'SU'
 
-    CUSTOMS_PAYMENT_CLIENT = 'DDU'
-    CUSTOMS_PAYMENT_CUSTOMER = 'DAP'
+    CUSTOMS_PAYMENT_CLIENT = 'DDP'
+    #CUSTOMS_PAYMENT_CUSTOMER = 'DAP'
 
     CUSTOMS_DOCUMENTS = 'DOCUMENTS'
     CUSTOMS_NON_DOCUMENTS = 'NON_DOCUMENTS'
@@ -42,7 +42,7 @@ class DHLShipment:
 
     def __init__(self, sender, receiver, packages, registration_numbers=None,ship_datetime=None, request_pickup=False, reference_code=None,
                  service_type=SERVICE_TYPE_EU, currency=CURRENCY_EUR, unit=UNIT_METRIC,
-                 payment_info=CUSTOMS_PAYMENT_CUSTOMER, customs_description=None, customs_value=None,
+                 payment_info=None, customs_description=None, customs_value=None,
                  customs_content=CUSTOMS_DOCUMENTS, special_pickup_instructions=None,
                  pickup_time=None, drop_off_type=None):
         self.sender = sender
