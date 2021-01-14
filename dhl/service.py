@@ -324,6 +324,12 @@ class DHLService:
         dhl_shipment.ShipmentInfo.RequestPickupDetails = 'N'
         #dhl_shipment.ShipmentInfo.PackagesCount = str(len(shipment.packages))
         dhl_shipment.PaymentInfo = shipment.payment_info_paperless
+        list_service = client.factory.create('Services')
+        for service in shipment.service:
+            special_service_element = client.factory.create('Service')
+            special_service_element.ServiceType = service
+            list_service.Service.append(special_service_element)
+        dhl_shipment.ShipmentInfo.SpecialServices = list_service
         dhl_shipment.ShipmentInfo.SpecialServices.Service = client.factory.create('Service')
         dhl_shipment.ShipmentInfo.SpecialServices.Service.ServiceType = shipment.service_type_paperless
         dhl_shipment.InternationalDetail.Commodities.Description = shipment.customs_description
