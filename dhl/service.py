@@ -330,8 +330,6 @@ class DHLService:
             special_service_element.ServiceType = service
             list_service.Service.append(special_service_element)
         dhl_shipment.ShipmentInfo.SpecialServices = list_service
-        dhl_shipment.ShipmentInfo.SpecialServices.Service = client.factory.create('Service')
-        dhl_shipment.ShipmentInfo.SpecialServices.Service.ServiceType = shipment.service_type_paperless
         dhl_shipment.InternationalDetail.Commodities.Description = shipment.customs_description
         dhl_shipment.InternationalDetail.Commodities.CustomsValue = shipment.customs_value
         dhl_shipment.InternationalDetail.Content = shipment.customs_content
