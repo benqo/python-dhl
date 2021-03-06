@@ -46,7 +46,7 @@ sender = DHLCompany(
             company_name='GitHub',
             person_name='Git Hub',
             street_lines='275 Brannan Street',
-            city='San Francisco,
+            city='San Francisco',
             postal_code='94107',
             country_code='US',
             phone='11111111',
@@ -63,7 +63,7 @@ Receiver can also be either a ``DHLPerson`` or a ``DHLCompany``.
 receiver = DHLPerson(
             person_name='Jon Doe',
             street_lines='276 Brannan Street',
-            city='San Francisco,
+            city='San Francisco',
             postal_code='94107',
             country_code='US',
             phone='11111111',
