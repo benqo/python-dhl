@@ -318,6 +318,7 @@ class DHLService:
         dhl_shipment.ShipmentInfo.LabelTemplate = shipment.label_template
         dhl_shipment.ShipmentInfo.Account = self.account_number
         dhl_shipment.ShipmentInfo.ServiceType = shipment.service_type
+        dhl_shipment.ShipmentInfo.QRCodeImageFormat = 'PNG'
         dhl_shipment.ShipmentInfo.RequestAdditionalInformation = 'N'
         dhl_shipment.ShipmentInfo.RequestEstimatedDeliveryDate = 'N'
         dhl_shipment.ShipmentInfo.EstimatedDeliveryDateType = 'QDDC'
@@ -378,7 +379,8 @@ class DHLService:
             dhl_package.Dimensions.Length = str(package.length)
             dhl_package.Dimensions.Width = str(package.width)
             dhl_package.Dimensions.Height = str(package.height)
-            dhl_package.CustomerReferences = shipment.reference_code
+            dhl_package.PieceIdentificationNumber = shipment.reference_code
+            #dhl_package.CustomerReferences = shipment.reference_code
             dhl_package.PackageContentDescription = str(package.description)
             dhl_shipment.Packages.RequestedPackages += (dhl_package,)
             counter += 1
